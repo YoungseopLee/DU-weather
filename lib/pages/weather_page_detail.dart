@@ -44,6 +44,8 @@ class DetailWeatherPage extends StatelessWidget {
         return 'assets/images/day-rain.json';
       case 'light rain':
         return 'assets/images/day-rain.json';
+      case 'heavy intensity rain':
+        return 'assets/images/day-rain.json';
 
       case 'thunderstorm':
         return 'assets/images/day-thunder.json';

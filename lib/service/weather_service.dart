@@ -40,13 +40,10 @@ class WeatherService {
     print('API 응답: ${response.body}'); // API 응답 로그 확인
 
     if (response.statusCode == 200) {
-      // 성공적으로 날씨 데이터를 받았을 때 처리 로직
-      var weatherJson = json.decode(response.body);
+      var weatherJson = json
+          .decode(response.body); // 이제 hourly 데이터도 함께 파싱하여 Weather 객체를 만듭니다.
       return Weather.fromJson(weatherJson);
     } else {
-      // 실패시 예외 처리 로직
-      print('날씨 데이터를 불러오는데 실패했습니다. 상태 코드: ${response.statusCode}');
-      print('오류 메시지: ${response.body}');
       throw Exception('날씨 데이터를 불러오는데 실패했습니다. 상태 코드: ${response.statusCode}');
     }
   }
@@ -113,6 +110,7 @@ class NotificationService {
     final AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher'); // 앱 아이콘 설정
 
+    // 아래 코드가 수정되었습니다.
     final DarwinInitializationSettings initializationSettingsIOS =
         DarwinInitializationSettings(
             requestAlertPermission: true,
