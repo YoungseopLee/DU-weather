@@ -1,3 +1,4 @@
+// weather_page.dart
 import 'dart:typed_data';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter/material.dart';
@@ -23,11 +24,20 @@ class _WeatherPageState extends State<WeatherPage> {
   Uint8List? _backgroundImage;
   Uint8List? placeholderImageBytes;
 
+  bool _isLoading = false; // 로딩 상태 변수 추가
+
   @override
   void initState() {
     super.initState();
     _fetchWeather();
     _loadPlaceholderImage();
+    _isLoading = false;
+  }
+
+  void _finishLoading() {
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   Future<void> _loadPlaceholderImage() async {
@@ -55,24 +65,59 @@ class _WeatherPageState extends State<WeatherPage> {
 
   Future<void> _updateBackgroundImage(Weather weather) async {
     String prompt =
-        'A ${weather.mainCondition} day with a temperature of ${weather.temperature}°C girl or boy';
+        'A ${weather.mainCondition} day with a temperature of ${weather.temperature}°C city or nature, boy or girl or both, ';
     String? messageId = await _nextLegApiService.generateImage(prompt);
     if (messageId != null) {
-      Uint8List? imageBytes = await _nextLegApiService.pollForImage(messageId);
-      if (imageBytes != null) {
-        print('Received image data for background.');
+      print('messageId : $messageId');
+      _nextLegApiService.pollForImage(messageId).then((imageBytes) {
+        if (imageBytes != null) {
+          print('imageBytes : $imageBytes');
+          print('Received image data for background.');
+          setState(() {
+            _backgroundImage = imageBytes;
+          });
+        } else {
+          print('No image data received, using placeholder.');
+          setState(() {
+            _backgroundImage = placeholderImageBytes;
+          });
+        }
+      }).catchError((error) {
+        print('An error occurred while polling for image: $error');
         setState(() {
-          _backgroundImage = imageBytes;
+          _backgroundImage = placeholderImageBytes;
         });
-      } else {
-        print('No image data received, using placeholder.');
-        setState(() {
-          _backgroundImage =
-              placeholderImageBytes; // Use the loaded placeholder image bytes
-        });
-      }
+      });
     } else {
       print('No messageId received, cannot proceed to fetch image.');
+      setState(() {
+        _backgroundImage = placeholderImageBytes;
+      });
+    }
+  }
+
+  List<String> _imageUrls = ['assets/background/background-sunny05.png'];
+  int _currentImageIndex = 0;
+
+  // 이미지 URL 배열을 초기화하는 메소드 추가
+  void _initializeImageUrls(List<String> urls) {
+    setState(() {
+      _imageUrls = urls;
+    });
+  }
+
+  void _changeImage(int newIndex) {
+    if (_imageUrls.isNotEmpty && newIndex < _imageUrls.length) {
+      _nextLegApiService.getImageBytes(_imageUrls[newIndex]).then((imageBytes) {
+        if (imageBytes != null) {
+          setState(() {
+            _backgroundImage = imageBytes;
+            _currentImageIndex = newIndex;
+          });
+        }
+      }).catchError((error) {
+        print('An error occurred while fetching the image: $error');
+      });
     }
   }
 
@@ -111,6 +156,26 @@ class _WeatherPageState extends State<WeatherPage> {
                       Text(_weather?.mainCondition ?? "",
                           style: TextStyle(fontSize: 18, color: Colors.black)),
                     ],
+                    if (_isLoading) // 로딩 중이면 애니메이션 표시
+                      Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                    // FloatingActionButton을 ElevatedButton으로 변경하고 이미지 변경 로직을 적용
+                    Align(
+                      alignment: Alignment.bottomRight,
+                      child: Padding(
+                        padding: EdgeInsets.only(right: 10, bottom: 10),
+                        child: ElevatedButton(
+                          onPressed: () {
+                            int nextIndex =
+                                (_currentImageIndex + 1) % _imageUrls.length;
+                            _changeImage(nextIndex);
+                            print('nextIndex : $nextIndex');
+                          },
+                          child: Text('이미지 변경'),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
