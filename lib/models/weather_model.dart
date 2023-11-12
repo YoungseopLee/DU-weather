@@ -36,7 +36,6 @@ class Weather {
     List<DailyWeather> dailyWeather =
         dailyJson.map((i) => DailyWeather.fromJson(i)).toList();
 
-    // 'timezone' 대신 'name'을 사용해야 할 것 같습니다. API의 실제 응답에 따라 변경해 주세요.
     return Weather(
       cityName: json['timezone'], // 수정됨: 'timezone' -> 'name'
       temperature: json['current']['temp'].toDouble(),

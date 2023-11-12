@@ -81,50 +81,7 @@ class NextLegApiService {
     }
   }
 
-  /* imageUrl 관련 메소드*/
   /*
-  Future<Uint8List?> pollForImage(String messageId,
-      {int maxRetries = 20, int expireMins = 2}) async {
-    var pollUrl =
-        'https://api.thenextleg.io/v2/message/$messageId?expireMins=$expireMins';
-    var headers = {'Authorization': 'Bearer $_authToken'};
-    int retryCount = 0;
-    while (retryCount < maxRetries) {
-      var response = await http.get(Uri.parse(pollUrl), headers: headers);
-      if (response.statusCode == 200) {
-        print('${response.statusCode}');
-        var data = json.decode(response.body);
-        if (data != null && data['progress'] != null) {
-          int progress = data['progress'];
-          print('Progress: $progress%');
-          if (progress == 100) {
-            print('Full API response at 100% progress: ${json.encode(data)}');
-            if (data != null &&
-                data['response'] != null &&
-                data['response']['imageUrl'] != null) {
-              print('Image URL: ${data['response']['imageUrl']}');
-              return await getImageBytes(data['response']['imageUrl']);
-            } else {
-              print(
-                  'Progress is 100%, but no imageUrl is provided in the response object.');
-              break;
-            }
-          }
-        } else {
-          print('The response did not contain progress or imageUrl.');
-          break;
-        }
-      } else {
-        break;
-      }
-
-      await Future.delayed(Duration(seconds: 5));
-      retryCount++;
-    }
-    print('Max retries exceeded or an error occurred.');
-    return null;
-  } */
-
   Future<Uint8List?> pollForImage(String messageId,
       {int maxRetries = 20, int expireMins = 2}) async {
     var pollUrl =
@@ -171,5 +128,44 @@ class NextLegApiService {
     print(
         'Max retries exceeded or an error occurred without successful image retrieval.');
     return null;
+  }
+  */
+
+  Future<List<Uint8List?>> pollForImages(String messageId,
+      {int maxRetries = 20, int expireMins = 2}) async {
+    var pollUrl =
+        'https://api.thenextleg.io/v2/message/$messageId?expireMins=$expireMins';
+    var headers = {'Authorization': 'Bearer $_authToken'};
+    int retryCount = 0;
+    List<Uint8List?> imageBytesList = [];
+
+    while (retryCount < maxRetries) {
+      var response = await http.get(Uri.parse(pollUrl), headers: headers);
+      print(
+          'Polling attempt: $retryCount with status code: ${response.statusCode}'); // 로그 추가
+
+      if (response.statusCode == 200) {
+        var data = json.decode(response.body);
+        if (data['progress'] == 100 && data['response'] != null) {
+          int progress = data['progress'];
+          print('Progress: $progress%');
+          print('Response body: ${response.body}'); // 로그 추가
+          List<String> imageUrls = List.from(data['response']['imageUrls']);
+          for (String imageUrl in imageUrls) {
+            Uint8List? imageBytes = await getImageBytes(imageUrl);
+            if (imageBytes != null) {
+              imageBytesList.add(imageBytes);
+            }
+          }
+          return imageBytesList; // 모든 이미지 데이터를 리스트에 담아 반환
+        }
+      } else {
+        print('Unexpected response status code: ${response.statusCode}');
+      }
+      await Future.delayed(Duration(seconds: 5));
+      retryCount++;
+    }
+    print('Failed to retrieve images or max retries exceeded.');
+    return imageBytesList; // 이미지를 가져오는데 실패하면 빈 리스트 반환
   }
 }

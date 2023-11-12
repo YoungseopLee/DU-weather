@@ -62,12 +62,12 @@ class DetailWeatherPage extends StatelessWidget {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            SizedBox(height: paddingTop),
+            SizedBox(height: paddingTop + 10),
             _cityWeatherInfo(context),
             _weatherAnimation(),
             Text(
               '현재 날씨: ${weather.mainCondition}', // 현재 날씨 상태를 표시합니다.
-              style: const TextStyle(fontSize: 15),
+              style: const TextStyle(fontSize: 14),
             ),
             _temperatureInfo(),
             _rainForecast(),
@@ -99,7 +99,7 @@ class DetailWeatherPage extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 20.0),
       child: Lottie.asset(weatherAnimationPath,
-          width: 200, height: 200, fit: BoxFit.fill),
+          width: 240, height: 240, fit: BoxFit.fill),
     );
   }
 
