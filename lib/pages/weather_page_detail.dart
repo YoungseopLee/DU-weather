@@ -17,11 +17,12 @@ class DetailWeatherPage extends StatelessWidget {
     for (var hourlyWeather in weather.hourly) {
       if (hourlyWeather.dateTime.isBefore(next24Hours) &&
           hourlyWeather.condition.toLowerCase().contains('rain')) {
-        return 'Rainy conditions expected around ${DateFormat('ha').format(hourlyWeather.dateTime)}.';
+        return 'Rainy conditions expected around ${DateFormat('ha').format(hourlyWeather.dateTime)}.'
+            '\n-----------------------------------------\n';
       }
     }
-    return 'No rain expected in the next 24 hours.\n'
-        '\n--------------------------------------\n';
+    return 'No rain expected in the next 24 hours.'
+        '\n-----------------------------------------\n';
   }
 
   String get weatherAnimationPath =>
