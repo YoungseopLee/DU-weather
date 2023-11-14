@@ -60,7 +60,7 @@ class _WeatherPageState extends State<WeatherPage> {
   Future<void> _loadPlaceholderImage() async {
     try {
       final ByteData data =
-          await rootBundle.load('assets/images/placeholder.png');
+          await rootBundle.load('assets/images/placeholder.jpg');
       setState(() {
         placeholderImageBytes = data.buffer.asUint8List();
       });
@@ -93,13 +93,16 @@ class _WeatherPageState extends State<WeatherPage> {
     final dateFormat = DateFormat('yyyy-MM-dd HH:mm:ss');
     final currentTime = dateFormat.format(DateTime.now());
 
+    final bool isDayTime = DateTime.now().isAfter(weather.sunrise) &&
+        DateTime.now().isBefore(weather.sunset);
+
     String prompt = '${currentTime}'
         '${weather.mainCondition} '
         '${weather.temperature} '
         '${weather.cityName} '
         'with city and nature '
-        'modern animation style style '
-        'I wish people(A handsome guy or beautiful woman appears) were located a little farther away.';
+        'modern animation style style'
+        'I wish people(A beautiful woman or handsome guy appears) were located a little farther away.';
 
     String? messageId = await _nextLegApiService.generateImage(prompt);
     if (messageId != null) {
@@ -216,6 +219,7 @@ class _WeatherPageState extends State<WeatherPage> {
               right: 20,
               child: FloatingActionButton(
                 onPressed: _changeBackgroundImage,
+                backgroundColor: Colors.white70.withOpacity(0.03),
                 child: Icon(Icons.image),
               ),
             ),
@@ -227,7 +231,7 @@ class _WeatherPageState extends State<WeatherPage> {
               left: 20,
               child: FloatingActionButton(
                 onPressed: _requestNewImage,
-                backgroundColor: Colors.blue,
+                backgroundColor: Colors.white70.withOpacity(0.03),
                 child: Icon(Icons.refresh),
               ),
             ),
@@ -235,18 +239,22 @@ class _WeatherPageState extends State<WeatherPage> {
           // 이미지 저장 버튼 - 상단 여백 추가
           if (_backgroundImage != null && !_isLoading)
             Positioned(
-              top: MediaQuery.of(context).padding.top + 20, // 상단에 여백 추가
+              bottom: MediaQuery.of(context).padding.top + 50,
               right: 20,
               child: FloatingActionButton(
-                onPressed: _saveImageToFile, // _saveImageToFile 메소드 호출
-                backgroundColor: Colors.green,
-                child: Icon(Icons.save_alt),
+                onPressed: _saveImageToFile,
+                backgroundColor: Colors.white70.withOpacity(0.03),
+                child: Icon(
+                    Icons.save_alt_outlined), // 변경할 아이콘으로 Icons.download 사용
               ),
             ),
         ],
       ),
-      // 상세 날씨 정보 페이지
-      if (_weather != null) DetailWeatherPage(weather: _weather!),
+      // 상세 날씨 페이지 위젯
+      if (_weather != null)
+        DetailWeatherPage(weather: _weather!)
+      else
+        Container(), // `_weather`가 `null`일 때 비어 있는 컨테이너를 표시
     ]));
   }
 
@@ -303,9 +311,14 @@ class _WeatherPageState extends State<WeatherPage> {
               style: TextStyle(
                   fontSize: 60,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black)),
-          Text(_weather!.mainCondition,
-              style: TextStyle(fontSize: 18, color: Colors.black)),
+                  color: Colors.black87)),
+          Text(
+            _weather!.mainCondition,
+            style: TextStyle(
+                fontSize: 18,
+                color: Colors.black87,
+                fontWeight: FontWeight.bold),
+          ),
         ],
       ],
     );
