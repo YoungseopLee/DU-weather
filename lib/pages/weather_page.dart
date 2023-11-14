@@ -16,9 +16,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 
 class WeatherPage extends StatefulWidget {
-  const WeatherPage({Key? key}) : super(key: key);
+  final Weather? weather;
 
-  @override
+  const WeatherPage({Key? key, this.weather}) : super(key: key);
+
   _WeatherPageState createState() => _WeatherPageState();
 }
 
@@ -36,12 +37,20 @@ class _WeatherPageState extends State<WeatherPage> {
 
   bool _isLoading = false; // 로딩 상태 변수 추가
 
+  // 프롬프트 입력을 위한 컨트롤러 추가
+  TextEditingController _promptController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
-    _loadSavedImageIndex();
-    _fetchWeather();
-    _loadPlaceholderImage();
+    if (widget.weather != null) {
+      _weather = widget.weather;
+      // 필요한 경우 여기서 _weather를 사용하여 초기화 작업을 수행할 수 있습니다.
+    } else {
+      _loadSavedImageIndex();
+      _fetchWeather();
+      _loadPlaceholderImage();
+    }
     _isLoading = false;
   }
 
@@ -55,6 +64,13 @@ class _WeatherPageState extends State<WeatherPage> {
     setState(() {
       _isLoading = false;
     });
+  }
+
+  @override
+  void dispose() {
+    // 컨트롤러를 dispose 해주어야 메모리 누수를 방지할 수 있습니다.
+    _promptController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadPlaceholderImage() async {
@@ -89,20 +105,30 @@ class _WeatherPageState extends State<WeatherPage> {
   Future<void> _updateBackgroundImage(Weather weather) async {
     _startLoading(); // 로딩 시작
 
-    // intl 패키지를 사용하여 날짜와 시간 형식을 지정합니다.
+    // intl 패키지를 사용하여 날짜와 시간 형식을 지정.
     final dateFormat = DateFormat('yyyy-MM-dd HH:mm:ss');
     final currentTime = dateFormat.format(DateTime.now());
 
     final bool isDayTime = DateTime.now().isAfter(weather.sunrise) &&
         DateTime.now().isBefore(weather.sunset);
 
-    String prompt = '${currentTime}'
-        '${weather.mainCondition} '
-        '${weather.temperature} '
-        '${weather.cityName} '
-        'with city and nature '
-        'modern animation style style'
-        'I wish people(A beautiful woman or handsome guy appears) were located a little farther away.';
+    String prompt = "";
+
+    // 사용자가 입력한 프롬프트를 사용합니다.
+    String userPrompt = _promptController.text.trim();
+    if (userPrompt.isNotEmpty) {
+      // 사용자가 프롬프트를 입력했다면 해당 프롬프트를 사용합니다.
+      prompt = '${userPrompt} So that the upper body is visible';
+    } else {
+      // 사용자가 프롬프트를 입력하지 않았다면 기본 프롬프트를 사용합니다.
+      prompt = '${currentTime}'
+          ' ${weather.mainCondition} '
+          ' ${weather.temperature} '
+          ' ${weather.cityName} '
+          ' with city and nature'
+          ' modern animation style'
+          ' So that the background is clearly visible';
+    }
 
     String? messageId = await _nextLegApiService.generateImage(prompt);
     if (messageId != null) {
@@ -185,8 +211,6 @@ class _WeatherPageState extends State<WeatherPage> {
     final savedIndex = prefs.getInt('saved_image_index') ?? 0;
     setState(() {
       _currentImageIndex = savedIndex;
-      // 이전에 저장된 인덱스를 사용하여 배경 이미지를 설정할 수 있습니다.
-      // 예: _backgroundImage = _backgroundImages[_currentImageIndex];
     });
   }
 
@@ -207,7 +231,7 @@ class _WeatherPageState extends State<WeatherPage> {
           // 날씨 정보
           if (!_isLoading)
             Positioned(
-              top: MediaQuery.of(context).padding.top + 50,
+              top: MediaQuery.of(context).padding.top + 100,
               left: 40,
               child: _weatherInfoWidget(),
             ),
@@ -236,6 +260,24 @@ class _WeatherPageState extends State<WeatherPage> {
               ),
             ),
 
+          // 프롬프트 입력을 위한 텍스트 필드 추가
+          if (_backgroundImage != null && !_isLoading)
+            Positioned(
+              top: MediaQuery.of(context).padding.top,
+              left: 10,
+              right: 10,
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: TextField(
+                  controller: _promptController,
+                  decoration: InputDecoration(
+                    labelText: 'Customize Your Prompt',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ),
+            ),
+
           // 이미지 저장 버튼 - 상단 여백 추가
           if (_backgroundImage != null && !_isLoading)
             Positioned(
@@ -244,8 +286,7 @@ class _WeatherPageState extends State<WeatherPage> {
               child: FloatingActionButton(
                 onPressed: _saveImageToFile,
                 backgroundColor: Colors.white70.withOpacity(0.03),
-                child: Icon(
-                    Icons.save_alt_outlined), // 변경할 아이콘으로 Icons.download 사용
+                child: Icon(Icons.save_alt_outlined),
               ),
             ),
         ],

@@ -20,7 +20,7 @@ class DetailWeatherPage extends StatelessWidget {
         return 'Rainy conditions expected around ${DateFormat('ha').format(hourlyWeather.dateTime)}.';
       }
     }
-    return 'No rain expected in the next 24 hours.'
+    return 'No rain expected in the next 24 hours.\n'
         '\n--------------------------------------\n';
   }
 
@@ -30,6 +30,8 @@ class DetailWeatherPage extends StatelessWidget {
   String _getWeatherAnimation(String condition) {
     final bool isDayTime = DateTime.now().isAfter(weather.sunrise) &&
         DateTime.now().isBefore(weather.sunset);
+
+    print(isDayTime);
 
     // 날씨 조건과 시간대에 맞는 애니메이션을 선택합니다.
     switch (condition.toLowerCase()) {
@@ -352,6 +354,9 @@ class DetailWeatherPage extends StatelessWidget {
 
   String _WeatherIcon(String condition, bool isDayTime) {
     // 날씨 상태와 시간에 따라 애니메이션 경로를 결정합니다
+
+    final bool isDayTime = DateTime.now().isAfter(weather.sunrise) &&
+        DateTime.now().isBefore(weather.sunset);
     switch (condition.toLowerCase()) {
       case 'clear sky':
         return isDayTime
